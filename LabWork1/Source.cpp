@@ -61,6 +61,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	HDC hdc;
 	static HBRUSH solidBrush = CreateSolidBrush(RGB(0, 255, 0));
 	static HBITMAP hBitmap;
+	PAINTSTRUCT ps;
 
 	static double angle = 0;
 	int wheelDelta;
@@ -153,7 +154,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	//обработка сообщений перерисовки
 	case WM_PAINT:
-		hdc = GetDC(hWnd);//BeginPaint(hWnd, &ps);
+		hdc = BeginPaint(hWnd, &ps);
 		prevGraphicsMode = SetGraphicsMode(hdc, GM_ADVANCED);
 		TransformSprite(hdc, angle);
 
@@ -182,6 +183,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ModifyWorldTransform(hdc, NULL, MWT_IDENTITY);
 		SetGraphicsMode(hdc, prevGraphicsMode);
 		ReleaseDC(hWnd, hdc);
+		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
 		DeleteObject(solidBrush);
