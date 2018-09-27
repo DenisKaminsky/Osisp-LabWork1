@@ -17,7 +17,7 @@ const int hight = 100;
 const int width = 100;
 
 //поворот спрайта
-void TransformSprite(HDC hdc,double angle)
+void TransformSprite(HDC hdc,double angle,double angle2)
 {
 	XFORM xf;
 	xf.eM11 = 1;
@@ -28,9 +28,17 @@ void TransformSprite(HDC hdc,double angle)
 	xf.eDy = (float)-(posY + hight / 2);
 	ModifyWorldTransform(hdc, &xf, MWT_RIGHTMULTIPLY);
 
+	xf.eM11 = (float)cos(angle2);// (float)cos(angle);
+	xf.eM12 = 0;// (float)sin(angle);
+	xf.eM21 = 0;// (float)-sin(angle);
+	xf.eM22 = 1;// (float)cos(angle);
+	xf.eDx = 0;
+	xf.eDy = 0;
+	ModifyWorldTransform(hdc, &xf, MWT_RIGHTMULTIPLY);
+
 	xf.eM11 = (float)cos(angle);
 	xf.eM12 = (float)sin(angle);
-	xf.eM21 = (float)-sin(angle);;
+	xf.eM21 = (float)-sin(angle);
 	xf.eM22 = (float)cos(angle);
 	xf.eDx = 0;
 	xf.eDy = 0;
@@ -64,6 +72,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT ps;
 
 	static double angle = 0;
+	static double angle2 = 0;
 	int wheelDelta;
 	int fwKeys;
 	int MB_RESULT;
@@ -122,7 +131,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 				ULONG_PTR gdiplusToken;
-				GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+				GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);//инифиализируем gdi+
 
 				Gdiplus::Bitmap *img = Gdiplus::Bitmap::FromFile(wideCharFileName);
 				img->GetHBITMAP(BACKGROUND_COLOR, &hBitmap);
@@ -142,21 +151,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (wParam == 113)
 			ispicture = false;
 		//поворот спрайта
-		if (wParam == 49 || wParam == 50)
+		if (wParam == 49 || wParam == 50|| wParam == 51)
 		{
 			if (wParam == 49)
 				angle += M_PI / 20;
 			if (wParam == 50)
 				angle -= M_PI / 20;
+			if (wParam == 51)
+				angle2 += M_PI / 20;
 		}
 		InvalidateRect(hWnd, NULL, TRUE);
 		break;
 
 	//обработка сообщений перерисовки
 	case WM_PAINT:
-		hdc = BeginPaint(hWnd, &ps);
+		hdc = BeginPaint(hWnd, &ps);//дискриптор контекста устройства клиентской области окна
 		prevGraphicsMode = SetGraphicsMode(hdc, GM_ADVANCED);
-		TransformSprite(hdc, angle);
+		TransformSprite(hdc, angle,angle2);
 
 		if (!ispicture)
 		{		
@@ -169,9 +180,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			HDC sDC = CreateCompatibleDC(hdc);
-			HGDIOBJ prevobj = SelectObject(sDC, hBitmap);
-			//BitBlt(hdc, posX, posY, posX + width, posY + hight, sDC, 0, 0, SRCCOPY);
+			HDC sDC = CreateCompatibleDC(hdc);//создаем контекст устройства в памяти , совместимый с данным устройством
+			HGDIOBJ prevobj = SelectObject(sDC, hBitmap);//выбираем обьект в заданный контекст
+			/*SIZE spriteSize = GetBitmapSize(hBitmap);
+			bitWidth = spriteSize.cx;
+			bitHight = spriteSize.cy;
+			BitBlt(hdc, posX, posY, bitWidth, bitHight, sDC, 0, 0, SRCCOPY);*/
 			SIZE spriteSize = GetBitmapSize(hBitmap);
 			bitWidth = spriteSize.cx;
 			bitHight = spriteSize.cy;
@@ -194,6 +208,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
@@ -231,7 +246,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	FileOpenDialog.nFilterIndex = 1;
 	FileOpenDialog.lpstrFileTitle = NULL;
 	FileOpenDialog.nMaxFileTitle = 255;
-	FileOpenDialog.lpstrInitialDir = _T("C:\\Users\\Денис\\Documents\\Visual Studio 2015\\Projects\\WinAPI\\LabWork1\\LabWork1\\");
+	FileOpenDialog.lpstrInitialDir = _T("C:\\Users\\Денис\\Documents\\GitHub\\Osisp-LabWork1\\LabWork1");
 	FileOpenDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
 	//отображение окна
